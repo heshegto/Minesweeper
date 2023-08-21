@@ -14,7 +14,7 @@ class MinesweeperGame:
         self.desk = [[]]
 
         # Counting window size
-        self.cell_size = 20
+        self.cell_size = 16
         self.window_height = self.cell_size * self.height
         self.window_width = self.cell_size * self.width
 
@@ -114,32 +114,26 @@ class MinesweeperGame:
         # Creating display
         pygame.display.init()
         self.window = pygame.display.set_mode((self.window_width, self.window_height))
+
+        self.window.fill((255, 255, 255))
+        for i in range(self.height):
+            for j in range(self.width):
+                width, height = self.cell_size // 2 + self.cell_size * j, self.cell_size // 2 + self.cell_size * i
+                self.__draw_cell(self.window, width, height, 'NotOpened')
+
+        pygame.event.pump()
+        pygame.display.update()
         self.clock = pygame.time.Clock()
 
+    def __draw_cell(self, canvas, x, y, type):
+        cell = CellSprite(x, y, type)
+        all_sprites = pygame.sprite.Group()
+        all_sprites.add(cell)
+        all_sprites.draw(canvas)
 
     def continue_render(self):
         """This function should be called to update window"""
-        # Creating blank canvas
-        canvas = pygame.Surface((self.window_width, self.window_height))
-        canvas.fill((255, 255, 255))
-
-        # Add some gridlines to canvas
-        for x in range(self.width + 1):
-            pygame.draw.line(
-                canvas,
-                0,
-                (self.cell_size * x, 0),
-                (self.cell_size * x, self.window_height),
-                width=2,
-            )
-        for x in range(self.height + 1):
-            pygame.draw.line(
-                canvas,
-                0,
-                (0, self.cell_size * x),
-                (self.window_width, self.cell_size * x),
-                width=2,
-            )
+        pass
 
         # Printing result of step on canvas
         font = pygame.font.Font(None, 20)
@@ -158,6 +152,7 @@ class MinesweeperGame:
 
         # The following line copies our drawings from `canvas` to the visible window
         self.window.blit(canvas, canvas.get_rect())
+
         pygame.event.pump()
         pygame.display.update()
 
@@ -169,3 +164,28 @@ class MinesweeperGame:
         if self.window is not None:
             pygame.display.quit()
             pygame.quit()
+
+
+class CellSprite(pygame.sprite.Sprite):
+    def __init__(self, width, height, type):
+        super().__init__()
+        paths = {
+            0: "Minesweeper/Textures/num0.png",
+            1: "Minesweeper/Textures/num1.png",
+            2: "Minesweeper/Textures/num2.png",
+            3: "Minesweeper/Textures/num3.png",
+            4: "Minesweeper/Textures/num4.png",
+            5: "Minesweeper/Textures/num5.png",
+            6: "Minesweeper/Textures/num6.png",
+            7: "Minesweeper/Textures/num7.png",
+            8: "Minesweeper/Textures/num8.png",
+            'Exploded': "Minesweeper/Textures/ExplodedMine.png",
+            'Flag': "Minesweeper/Textures/Flag.png",
+            'Mine': "Minesweeper/Textures/Mine.png",
+            'NotMine': "Minesweeper/Textures/NotMine.png",
+            'NotOpened': "Minesweeper/Textures/NotOpened.png",
+        }
+
+        self.image = pygame.image.load(paths[type])  # Путь к изображению спрайта
+        self.rect = self.image.get_rect()
+        self.rect.center = (width, height)
