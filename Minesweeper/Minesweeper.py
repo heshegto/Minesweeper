@@ -20,10 +20,11 @@ class MinesweeperGame:
 
         # Variables that will be needed in render function
         self.window = None
-        self.clock = None
-        self.render_fps = 8
 
-    def reset_desks(self, height=5, width=5, mines=5) -> None:
+    def get_player_desk(self):
+        return self.playerDesk
+
+    def set_desks(self, height=5, width=5, mines=5) -> None:
         """Resets all desks using input height, width and mines"""
         self.end_game = False
         self.height, self.width, self.mines = height, width, mines
@@ -31,6 +32,7 @@ class MinesweeperGame:
         self.window_width = self.cell_size * self.width
 
         # What numbers on desks mean:
+        # -3 -cell is flaged (only on player desk)
         # -2 -cell isn't opened (only on player desk)
         # -1 -cell with mine
         # >=0 -number of mines around cell
@@ -75,14 +77,17 @@ class MinesweeperGame:
             raise Exception("Coordinates are out of range")
         if self.end_game:
             raise Exception("Game over. Start new one")
-        if self.playerDesk[x][y] != -2:
+        if self.playerDesk[x][y] not in [-2, -3]:
             print("This cell is already opened")
             return False
 
-        self.playerDesk[x][y] = self.desk[x][y]
+        if self.playerDesk[x][y] != -3:
+            self.playerDesk[x][y] = self.desk[x][y]
+            if self.window != None:
+                self.__continue_render(x, y, self.desk[x][y])
 
         # Additional moves if a player steps onto a cell without mines nearby
-        if self.desk[x][y] == 0:
+        if self.playerDesk[x][y] == 0:
             for x_ in range(-1, 2):
                 for y_ in range(-1, 2):
                     x_neighbor = x + x_
@@ -92,7 +97,7 @@ class MinesweeperGame:
                             self.step(x_neighbor, y_neighbor)
 
         # If player made move on mine
-        if self.desk[x][y] == -1:
+        if self.playerDesk[x][y] == -1:
             self.end_game = True
             print("You lose")
 
@@ -118,47 +123,42 @@ class MinesweeperGame:
         self.window.fill((255, 255, 255))
         for i in range(self.height):
             for j in range(self.width):
-                width, height = self.cell_size // 2 + self.cell_size * j, self.cell_size // 2 + self.cell_size * i
-                self.__draw_cell(self.window, width, height, 'NotOpened')
+                x, y = self.cell_size // 2 + self.cell_size * i, self.cell_size // 2 + self.cell_size * j
+                self.__draw_cell(self.window, x, y, 'NotOpened')
 
         pygame.event.pump()
         pygame.display.update()
-        self.clock = pygame.time.Clock()
 
-    def __draw_cell(self, canvas, x, y, type):
-        cell = CellSprite(x, y, type)
+    @staticmethod
+    def __draw_cell(canvas, x, y, type_of_cell):
+        cell = CellSprite(x, y, type_of_cell)
         all_sprites = pygame.sprite.Group()
         all_sprites.add(cell)
         all_sprites.draw(canvas)
 
-    def continue_render(self):
+    def __continue_render(self, x, y, cell_type):
         """This function should be called to update window"""
-        pass
-
-        # Printing result of step on canvas
-        font = pygame.font.Font(None, 20)
-
-        def draw_symbol(digit, xs, y):
-            digit_text = str(digit)
-            text_surface = font.render(digit_text, True, (0, 0, 0))
-            canvas.blit(text_surface, (xs, y))
-
-        for i in range(self.height):
-            for j in range(self.width):
-                if self.playerDesk[i][j] == -1:
-                    draw_symbol('B', (0.1 + i) * self.cell_size, (0.1 + j) * self.cell_size)
-                elif self.playerDesk[i][j] != -2:
-                    draw_symbol(self.playerDesk[i][j], (0.1 + i) * self.cell_size, (0.1 + j) * self.cell_size)
+        x, y = self.cell_size // 2 + self.cell_size * x, self.cell_size // 2 + self.cell_size * y
+        self.__draw_cell(self.window, x, y, cell_type)
 
         # The following line copies our drawings from `canvas` to the visible window
-        self.window.blit(canvas, canvas.get_rect())
-
         pygame.event.pump()
         pygame.display.update()
 
-        # We need to ensure that human-rendering occurs at the predefined framerate.
-        # The following line will automatically add a delay to keep the framerate stable.
-        self.clock.tick(self.render_fps)
+    def right_click(self, x, y):
+        x //= self.cell_size
+        y //= self.cell_size
+        if self.playerDesk[x][y] == -2:
+            self.playerDesk[x][y] = -3
+            self.__continue_render(x, y, 'Flag')
+        elif self.playerDesk[x][y] == -3:
+            self.playerDesk[x][y] = -2
+            self.__continue_render(x, y, 'NotOpened')
+
+    def left_click(self, x, y):
+        x //= self.cell_size
+        y //= self.cell_size
+        self.step(x, y)
 
     def close(self):
         if self.window is not None:
@@ -167,7 +167,7 @@ class MinesweeperGame:
 
 
 class CellSprite(pygame.sprite.Sprite):
-    def __init__(self, width, height, type):
+    def __init__(self, x, y, type_of_cell):
         super().__init__()
         paths = {
             0: "Minesweeper/Textures/num0.png",
@@ -179,13 +179,13 @@ class CellSprite(pygame.sprite.Sprite):
             6: "Minesweeper/Textures/num6.png",
             7: "Minesweeper/Textures/num7.png",
             8: "Minesweeper/Textures/num8.png",
-            'Exploded': "Minesweeper/Textures/ExplodedMine.png",
+            -1: "Minesweeper/Textures/ExplodedMine.png",
             'Flag': "Minesweeper/Textures/Flag.png",
             'Mine': "Minesweeper/Textures/Mine.png",
             'NotMine': "Minesweeper/Textures/NotMine.png",
             'NotOpened': "Minesweeper/Textures/NotOpened.png",
         }
 
-        self.image = pygame.image.load(paths[type])  # Путь к изображению спрайта
+        self.image = pygame.image.load(paths[type_of_cell])
         self.rect = self.image.get_rect()
-        self.rect.center = (width, height)
+        self.rect.center = (y, x)  # I don't know why but only in this case everything render correctly
