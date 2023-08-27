@@ -195,15 +195,16 @@ class MinesweeperGame:
                         InputField(120, 200, 140, 32, 'mines')
                         ]
 
-        color_active = pygame.Color('lightskyblue3')
-        color_passive = pygame.Color('chartreuse4')
+        buttons = [Button(80, 250, 200, 32, text_on_button="Start game", button_type='Start'),
+                   ]
 
         running = True
         while running:
             for event in pygame.event.get():
+                print(event)
                 if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
                     running = False
-                    # self.close()
+                    self.close()
 
                 # Input fields logic
                 for field in input_fields:
@@ -228,13 +229,13 @@ class MinesweeperGame:
                     if field.user_text.isdigit() and int(field.user_text) > 50:
                         field.user_text = "50"
                     if field.active:
-                        color = color_active
+                        field.color = field.color_active
                     else:
-                        color = color_passive
+                        field.color = field.color_passive
 
                     # draw rectangle and argument passed which should
                     # be on screen
-                    pygame.draw.rect(self.window, color, field)
+                    pygame.draw.rect(self.window, field.color, field)
 
                     text_surface = base_font.render(field.user_text, True, (255, 255, 255))
 
@@ -246,10 +247,39 @@ class MinesweeperGame:
                     field.w = max(140, text_surface.get_width() + 10)
                     pygame.display.flip()
 
-        self.height = int(input_fields[0].user_text)
-        self.width = int(input_fields[1].user_text)
-        self.mines = int(input_fields[2].user_text)
-        self.start_game(self.height, self.width, self.mines)
+                for button in buttons:
+                    pressed = False
+                    if event.type == pygame.MOUSEMOTION and button.collidepoint(event.pos):
+                        button.active = True
+                        button.color = button.active_color
+                    else:
+                        button.active = False
+                        button.color = button.passive_color
+                    if event.type == pygame.MOUSEBUTTONDOWN and button.collidepoint(event.pos):
+                        pygame.draw.rect(self.window, (255, 255, 255), button)
+                        button.x += round(button.w * 0.05)
+                        button.y += round(button.h * 0.05)
+                        button.w = round(0.9 * button.w)
+                        button.h = round(0.9* button.h)
+                        pressed = True
+                    if event.type == pygame.MOUSEBUTTONUP:
+                        button.w = round(button.w / 0.9)
+                        button.h = round(button.h / 0.9)
+                        button.x -= round(button.w * 0.05)
+                        button.y -= round(button.h * 0.05)
+                        if button.collidepoint(event.pos):
+                            match button.button_type:
+                                case 'Start':
+                                    self.height = int(input_fields[0].user_text)
+                                    self.width = int(input_fields[1].user_text)
+                                    self.mines = int(input_fields[2].user_text)
+                                    self.start_game(self.height, self.width, self.mines)
+                    pygame.draw.rect(self.window, button.color, button)
+                    text_surface = base_font.render(button.text_on_button, True, (255, 255, 255))
+                    self.window.blit(text_surface, (button.x + 5, button.y + 5))
+                    pygame.display.flip()
+
+
 
     def start_game(self, height: int, width: int, mines: int) -> None:
         self.set_desks(height, width, mines)
@@ -262,7 +292,7 @@ class MinesweeperGame:
                     self.right_click(event.pos[1], event.pos[0])
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     self.left_click(event.pos[1], event.pos[0])
-                if event.type == pygame.QUIT:
+                if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
                     running = False
                     self.close()
 
@@ -299,6 +329,22 @@ class InputField(pygame.Rect):
     def __init__(self, left, top, width, height, information_type, default_value='15'):
         super().__init__(left, top, width, height)
         self.information_type = information_type
+
         self.active = False
         self.user_text = default_value
         self.default_value = default_value
+        self.color_active = pygame.Color('lightskyblue3')
+        self.color_passive = pygame.Color('chartreuse4')
+
+        self.color = self.color_passive
+
+
+class Button(pygame.Rect):
+    def __init__(self, left, top, width, height, text_on_button, button_type):
+        super().__init__(left, top, width, height)
+        self.text_on_button = text_on_button
+        self.button_type = button_type
+        self.active = False
+        self.active_color = (170, 170, 170)
+        self.passive_color = (100, 100, 100)
+        self.color = self.passive_color
