@@ -45,8 +45,8 @@ class MinesweeperGame:
         # Putting mines randomly
         count = 0
         while count < self.mines:
-            i = int(np.random.random_integers(0, self.height-1, size=1))
-            j = int(np.random.random_integers(0, self.width-1, size=1))
+            i = int(np.random.random_integers(0, self.height - 1, size=1))
+            j = int(np.random.random_integers(0, self.width - 1, size=1))
             if self.desk[i][j] != 0:
                 continue
             self.desk[i][j] = -1
@@ -189,11 +189,14 @@ class MinesweeperGame:
 
         # basic font for user typed
         base_font = pygame.font.Font(None, 32)
-        Fields = [TextField(100,100,'height'), TextField(100,150,'width'), TextField(100,200,'mines')]
+        # Fields in which player set desk height, desk width and amount of mines
+        input_fields = [InputField(120, 100, 140, 32, 'height'),
+                        InputField(120, 150, 140, 32, 'width'),
+                        InputField(120, 200, 140, 32, 'mines')
+                        ]
 
         color_active = pygame.Color('lightskyblue3')
         color_passive = pygame.Color('chartreuse4')
-        color = color_passive
 
         running = True
         while running:
@@ -202,44 +205,50 @@ class MinesweeperGame:
                     running = False
                     # self.close()
 
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    for field in Fields:
-                        if field.input_rect.collidepoint(event.pos):
+                # Input fields logic
+                for field in input_fields:
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+                        if field.collidepoint(event.pos):
                             field.active = True
+                            field.user_text = ''
                         else:
                             field.active = False
+                            if field.user_text == '':
+                                field.user_text = field.default_value
 
-                if event.type == pygame.KEYDOWN:
-                    for field in Fields:
+                    if event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_BACKSPACE and field.active:
                             field.user_text = field.user_text[:-1]
                         elif event.key == pygame.K_KP_ENTER:
                             field.active = False
+                            if field.user_text == '':
+                                field.user_text = field.default_value
                         elif event.unicode.isdigit() and field.active:
                             field.user_text += event.unicode
-            for field in Fields:
-                if field.active:
-                    color = color_active
-                else:
-                    color = color_passive
+                    if field.user_text.isdigit() and int(field.user_text) > 50:
+                        field.user_text = "50"
+                    if field.active:
+                        color = color_active
+                    else:
+                        color = color_passive
 
-            # draw rectangle and argument passed which should
-            # be on screen
-                pygame.draw.rect(self.window, color, field.input_rect)
+                    # draw rectangle and argument passed which should
+                    # be on screen
+                    pygame.draw.rect(self.window, color, field)
 
-                text_surface = base_font.render(field.user_text, True, (255, 255, 255))
+                    text_surface = base_font.render(field.user_text, True, (255, 255, 255))
 
-                # render at position stated in arguments
-                self.window.blit(text_surface, (field.input_rect.x + 5, field.input_rect.y + 5))
+                    # render at position stated in arguments
+                    self.window.blit(text_surface, (field.x + 5, field.y + 5))
 
-                # set width of textfield so that text cannot get
-                # outside of user's text input
-                field.input_rect.w = max(100, text_surface.get_width() + 10)
-                pygame.display.flip()
+                    # set width of textfield so that text cannot get
+                    # outside of user's text input
+                    field.w = max(140, text_surface.get_width() + 10)
+                    pygame.display.flip()
 
-        self.height = int(Fields[0].user_text)
-        self.width = int(Fields[1].user_text)
-        self.mines = int(Fields[2].user_text)
+        self.height = int(input_fields[0].user_text)
+        self.width = int(input_fields[1].user_text)
+        self.mines = int(input_fields[2].user_text)
         self.start_game(self.height, self.width, self.mines)
 
     def start_game(self, height: int, width: int, mines: int) -> None:
@@ -286,8 +295,10 @@ class CellSprite(pygame.sprite.Sprite):
         self.rect.center = (y, x)  # I don't know why but only in this case everything render correctly
 
 
-class TextField:
-    def __init__(self, x, y, type):
+class InputField(pygame.Rect):
+    def __init__(self, left, top, width, height, information_type, default_value='15'):
+        super().__init__(left, top, width, height)
+        self.information_type = information_type
         self.active = False
-        self.user_text = ''
-        self.input_rect = pygame.Rect(x, y, 140, 32)
+        self.user_text = default_value
+        self.default_value = default_value
