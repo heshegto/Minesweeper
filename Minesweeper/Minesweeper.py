@@ -6,6 +6,7 @@ import numpy as np
 class MinesweeperGame:
     def __init__(self) -> None:
         self.end_game = False  # End game flag
+        self.end_game_message = ''
         self.height, self.width, self.mines = 5, 5, 5
 
         # Creating player's desk (only this desk player sees)
@@ -102,7 +103,7 @@ class MinesweeperGame:
         if self.playerDesk[x][y] == -1:
             self.end_game = True
             self.show_other_mines(x, y)
-            print("You lose")
+            self.end_game_message = "You lose"
 
         # Checking if there is any available moves, if No player win
         is_end = True
@@ -112,7 +113,7 @@ class MinesweeperGame:
                     is_end = False
         if is_end:
             self.end_game = True
-            print("You win")
+            self.end_game_message = "You win"
 
         return self.end_game
 
@@ -156,10 +157,10 @@ class MinesweeperGame:
             self.playerDesk[x][y] = -2
             self.__continue_render(x, y, 'NotOpened')
 
-    def left_click(self, x, y):
+    def left_click(self, x, y) -> bool:
         x //= self.cell_size
         y //= self.cell_size
-        self.step(x, y)
+        return self.step(x, y)
 
     def close(self):
         if self.window is not None:
@@ -279,8 +280,6 @@ class MinesweeperGame:
                     self.window.blit(text_surface, (button.x + 5, button.y + 5))
                     pygame.display.flip()
 
-
-
     def start_game(self, height: int, width: int, mines: int) -> None:
         self.set_desks(height, width, mines)
         self.render_game_desk()
@@ -291,13 +290,29 @@ class MinesweeperGame:
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
                     self.right_click(event.pos[1], event.pos[0])
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                    self.left_click(event.pos[1], event.pos[0])
+                    if self.end_game:
+                        self.show_result_window()
+                    else:
+                        self.left_click(event.pos[1], event.pos[0])
                 if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
                     running = False
                     self.close()
 
     def show_result_window(self):
-        pass
+        pygame.init()
+        pygame.display.init()
+        self.window = pygame.display.set_mode((300, 150))
+        self.window.fill((255, 255, 255))
+        base_font = pygame.font.Font(None, 32)
+        text_surface = base_font.render(self.end_game_message, True, (0, 0, 0))
+        self.window.blit(text_surface, (10, 10))
+        pygame.display.update()
+        running = True
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
+                    running = False
+                    self.close()
 
 
 class CellSprite(pygame.sprite.Sprite):
