@@ -1,9 +1,9 @@
 import pygame
-from Minesweeper import Game
+from Minesweeper import Game, show_game_menu
 import sys
 sys.setrecursionlimit(5000)
 
+
 if __name__ == '__main__':
     a = Game()
-    a.show_menu()
-    # a.start_game(50, 95, 500)
+    show_game_menu(a)
