@@ -103,8 +103,9 @@ class MinesweeperGame:
         # If player made move on mine
         if self.playerDesk[x][y] == -1:
             self.end_game = True
-            self.__show_other_mines(x, y)
             self.end_game_message = "You lose"
+            if self.window is not None:
+                self.__show_other_mines(x, y)
 
         # Checking if there is any available moves, if No player win
         is_end = True
@@ -136,19 +137,21 @@ class MinesweeperGame:
         pygame.display.update()
 
     def continue_render(self, x, y, cell_type):
-        """This function should be called to update window"""
+        """This function should be called to update window after every step"""
         x, y = self.cell_size // 2 + self.cell_size * x, self.cell_size // 2 + self.cell_size * y
         self.__draw_cell(self.window, x, y, cell_type)
         pygame.display.flip()
 
     @staticmethod
     def __draw_cell(canvas, x, y, type_of_cell):
+        """Drawing special type of cell in window in special position"""
         cell = CellSprite(x, y, type_of_cell)
         all_sprites = pygame.sprite.Group()
         all_sprites.add(cell)  # PyCharm shows problem here, but everything ok
         all_sprites.draw(canvas)
 
     def __show_other_mines(self, x, y):
+        """This function shows other mines when player steps on mine"""
         for i in range(self.height):
             for j in range(self.width):
                 x_, y_ = self.cell_size // 2 + self.cell_size * i, self.cell_size // 2 + self.cell_size * j
@@ -163,6 +166,7 @@ class MinesweeperGame:
         pygame.display.update()
 
     def close(self):
+        """Closes everything"""
         if self.window is not None:
             pygame.display.quit()
             pygame.quit()

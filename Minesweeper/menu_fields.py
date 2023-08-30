@@ -21,6 +21,7 @@ class Button(pygame.Rect):
         self.text_on_button = text_on_button
         self.button_type = button_type
         self.active = False
+        self.pressed = False
         self.active_color = (170, 170, 170)
         self.passive_color = (100, 100, 100)
         self.color = self.passive_color
