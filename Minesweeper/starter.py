@@ -10,25 +10,31 @@ def show_game_menu(game: Game):
     pygame.display.init()
     game.window = pygame.display.set_mode((300, 300))
     game.window.fill(background_color)
-
     # basic font for user typed
     base_font = pygame.font.Font(None, 32)
+
+    greetings_font = pygame.font.Font(None, 40)
+    greetings_text = greetings_font.render("Minesweeper", True, (0, 0, 0))
 
     text_1 = base_font.render("Height", True, (0, 0, 0))
     text_2 = base_font.render("Width", True, (0, 0, 0))
     text_3 = base_font.render("Mines", True, (0, 0, 0))
 
+    game.window.blit(greetings_text, (75, 10))
     game.window.blit(text_1, (25, 105))
     game.window.blit(text_2, (25, 155))
     game.window.blit(text_3, (25, 205))
 
     # Fields in which player set desk height, desk width and amount of mines
-    input_fields = [InputField(120, 100, 140, 32, 'height'),
-                    InputField(120, 150, 140, 32, 'width'),
-                    InputField(120, 200, 140, 32, 'mines')
+    input_fields = [InputField(142, 100, 140, 32, 'height'),
+                    InputField(142, 150, 140, 32, 'width'),
+                    InputField(142, 200, 140, 32, 'mines')
                     ]
 
-    buttons = [Button(80, 250, 200, 32, text_on_button="Start game", button_type='Start'),
+    buttons = [Button(80, 250, 130, 32, text_on_button="Start game", button_type='Start'),
+               Button(25, 50, 62, 32, text_on_button="Easy", button_type='Easy'),
+               Button(107, 50, 92, 32, text_on_button="Medium", button_type='Medium'),
+               Button(219, 50, 62, 32, text_on_button="Hard", button_type='Hard'),
                ]
 
     running = True
@@ -44,27 +50,29 @@ def show_game_menu(game: Game):
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if field.collidepoint(event.pos):
                         field.active = True
-                        field.user_text = ''
+                        field.text = ''
                     else:
                         field.active = False
-                        if field.user_text == '':
-                            field.user_text = field.default_value
+                        if field.text == '':
+                            field.text = field.default_value
 
                 # Logic when player typing something in Input Fields
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_BACKSPACE and field.active:
-                        field.user_text = field.user_text[:-1]
+                        field.text = field.text[:-1]
                     elif event.unicode.isdigit() and field.active:
-                        field.user_text += event.unicode
+                        field.text += event.unicode
 
                     elif event.key == pygame.K_KP_ENTER:
                         field.active = False
-                        if field.user_text == '':
-                            field.user_text = field.default_value
+                        if field.text == '':
+                            field.text = field.default_value
 
                 # Max number that field can contain in itself
-                if field.user_text.isdigit() and int(field.user_text) > 50:
-                    field.user_text = "50"
+                if field.information_type != 'mines' and field.text.isdigit() and int(field.text) > 50:
+                    field.text = "50"
+                if field.information_type == 'mines' and field.text.isdigit() and int(field.text) > 100:
+                    field.text = "100"
 
                 # Coloring active and passive fields
                 if field.active:
@@ -73,23 +81,16 @@ def show_game_menu(game: Game):
                     field.color = field.color_passive
 
                 # draw rectangle and argument passed which should be on screen
-                pygame.draw.rect(game.window, field.color, field)
-                text_surface = base_font.render(field.user_text, True, (255, 255, 255))
-
-                # render at position stated in arguments
-                game.window.blit(text_surface, (field.x + 5, field.y + 5))
-
-                # set width of textfield so that text cannot get outside of user's text input
-                # field.w = max(140, text_surface.get_width() + 10)
-                pygame.display.flip()
+                draw(game.window, field.color, field)
 
             for button in buttons:
-                if event.type == pygame.MOUSEMOTION and button.collidepoint(event.pos):
-                    button.active = True
-                    button.color = button.active_color
-                else:
-                    button.active = False
-                    button.color = button.passive_color
+                if event.type == pygame.MOUSEMOTION:
+                    if button.collidepoint(event.pos):
+                        button.active = True
+                        button.color = button.active_color
+                    else:
+                        button.active = False
+                        button.color = button.passive_color
                 if event.type == pygame.MOUSEBUTTONDOWN and button.collidepoint(event.pos):
                     pygame.draw.rect(game.window, (255, 255, 255), button)
                     button.x += round(button.w * 0.05)
@@ -107,14 +108,40 @@ def show_game_menu(game: Game):
                     if button.collidepoint(event.pos):
                         match button.button_type:
                             case 'Start':
-                                game.height = int(input_fields[0].user_text)
-                                game.width = int(input_fields[1].user_text)
-                                game.mines = int(input_fields[2].user_text)
+                                game.height = int(input_fields[0].text)
+                                game.width = int(input_fields[1].text)
+                                game.mines = int(input_fields[2].text)
                                 start_game(game, game.height, game.width, game.mines)
-                pygame.draw.rect(game.window, button.color, button)
-                text_surface = base_font.render(button.text_on_button, True, (255, 255, 255))
-                game.window.blit(text_surface, (button.x + 5, button.y + 5))
-                pygame.display.flip()
+                            case 'Easy':
+                                input_fields[0].text, input_fields[1].text, input_fields[2].text = '8', '10', '10'
+                                draw(game.window, input_fields[0].color, input_fields[0])
+                                draw(game.window, input_fields[1].color, input_fields[1])
+                                draw(game.window, input_fields[2].color, input_fields[2])
+                            case 'Medium':
+                                input_fields[0].text, input_fields[1].text, input_fields[2].text = '14', '18', '40'
+                                draw(game.window, input_fields[0].color, input_fields[0])
+                                draw(game.window, input_fields[1].color, input_fields[1])
+                                draw(game.window, input_fields[2].color, input_fields[2])
+                            case 'Hard':
+                                input_fields[0].text, input_fields[1].text, input_fields[2].text = '20', '24', '99'
+                                draw(game.window, input_fields[0].color, input_fields[0])
+                                draw(game.window, input_fields[1].color, input_fields[1])
+                                draw(game.window, input_fields[2].color, input_fields[2])
+
+                draw(game.window, button.color, button)
+
+
+def draw(window, color, thing):
+    base_font = pygame.font.Font(None, 32)
+    pygame.draw.rect(window, color, thing)
+    text_surface = base_font.render(thing.text, True, (255, 255, 255))
+
+    # render at position stated in arguments
+    window.blit(text_surface, (thing.x + 5, thing.y + 5))
+
+    # set width of textfield so that text cannot get outside of user's text input
+    # field.w = max(140, text_surface.get_width() + 10)
+    pygame.display.flip()
 
 
 def start_game(game: Game, height: int, width: int, mines: int) -> None:
@@ -168,3 +195,4 @@ def left_click(game, x, y) -> bool:
     x //= game.cell_size
     y //= game.cell_size
     return game.step(x, y)
+
