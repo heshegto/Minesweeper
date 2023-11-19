@@ -148,16 +148,37 @@ def start_game(game: Game, height: int, width: int, mines: int) -> None:
     game.set_desks(height, width, mines)
     game.render_game_desk()
 
+    ac_x = 0  # x dimension of active cell
+    ac_y = 0  # y dimension of active cell
+
+    # Logic when you push cells with different mouse buttons
     running = True
     while running:
         for event in pygame.event.get():
-            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
-                right_click(game, event.pos[1], event.pos[0])
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                if game.end_game:
+                ac_x = event.pos[1] // game.cell_size
+                ac_y = event.pos[0] // game.cell_size
+                if game.playerDesk[ac_x][ac_y] == -2:
+                    game.continue_render(ac_x, ac_y, 'ActiveCell')
+            if event.type == pygame.MOUSEBUTTONUP:
+                x, y = event.pos[1], event.pos[0]
+                x //= game.cell_size
+                y //= game.cell_size
+
+                # This variable makes sure that button pushed and released at the same cell
+                cell_activated = (ac_x == x) and (ac_y == y)
+
+                # Push any mouse button to leave the game in the end
+                if game.end_game and event.button:
                     show_result_window(game)
-                else:
-                    left_click(game, event.pos[1], event.pos[0])
+
+                if event.button == 3:
+                    right_click(game, x, y)
+                elif event.button == 1 and cell_activated:
+                    left_click(game, x, y)
+                elif game.playerDesk[ac_x][ac_y] == -2:
+                    game.continue_render(ac_x, ac_y, 'NotOpened')
+
             if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
                 running = False
                 game.close()
@@ -170,6 +191,10 @@ def show_result_window(game: Game):
     game.window.fill(background_color)
     base_font = pygame.font.Font(None, 32)
     text_surface = base_font.render(game.end_game_message, True, (0, 0, 0))
+
+    restart_button = Button(80, 50, 92, 32, text_on_button="Restart", button_type='Restart_button')
+    exit_button = Button(90, 100, 62, 32, text_on_button="Exit", button_type='exit_button')
+
     game.window.blit(text_surface, (10, 10))
     pygame.display.update()
     running = True
@@ -181,8 +206,6 @@ def show_result_window(game: Game):
 
 
 def right_click(game: Game, x, y):
-    x //= game.cell_size
-    y //= game.cell_size
     if game.playerDesk[x][y] == -2:
         game.playerDesk[x][y] = -3
         game.continue_render(x, y, 'Flag')
@@ -192,7 +215,4 @@ def right_click(game: Game, x, y):
 
 
 def left_click(game, x, y) -> bool:
-    x //= game.cell_size
-    y //= game.cell_size
     return game.step(x, y)
-

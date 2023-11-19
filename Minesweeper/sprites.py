@@ -19,6 +19,7 @@ class CellSprite(pygame.sprite.Sprite):
             'Mine': "Minesweeper/Textures/Mine.png",
             'NotMine': "Minesweeper/Textures/NotMine.png",
             'NotOpened': "Minesweeper/Textures/NotOpened.png",
+            'ActiveCell': "Minesweeper/Textures/ActiveCell.png"
         }
 
         self.image = pygame.image.load(paths[type_of_cell])
