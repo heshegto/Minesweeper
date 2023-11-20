@@ -46,87 +46,34 @@ def show_game_menu(game: Game):
 
             # Input fields logic
             for field in input_fields:
-                # Making field active
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    if field.collidepoint(event.pos):
-                        field.active = True
-                        field.text = ''
-                    else:
-                        field.active = False
-                        if field.text == '':
-                            field.text = field.default_value
-
-                # Logic when player typing something in Input Fields
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_BACKSPACE and field.active:
-                        field.text = field.text[:-1]
-                    elif event.unicode.isdigit() and field.active:
-                        field.text += event.unicode
-
-                    elif event.key == pygame.K_KP_ENTER:
-                        field.active = False
-                        if field.text == '':
-                            field.text = field.default_value
-
-                # Max number that field can contain in itself
-                if field.information_type != 'mines' and field.text.isdigit() and int(field.text) > 50:
-                    field.text = "50"
-                if field.information_type == 'mines' and field.text.isdigit() and int(field.text) > 100:
-                    field.text = "100"
-
-                # Coloring active and passive fields
-                if field.active:
-                    field.color = field.color_active
-                else:
-                    field.color = field.color_passive
+                field.field_logic(event)
 
                 # draw rectangle and argument passed which should be on screen
                 draw(game.window, field.color, field)
 
             for button in buttons:
-                if event.type == pygame.MOUSEMOTION:
-                    if button.collidepoint(event.pos):
-                        button.active = True
-                        button.color = button.active_color
-                    else:
-                        button.active = False
-                        button.color = button.passive_color
-                if event.type == pygame.MOUSEBUTTONDOWN and button.collidepoint(event.pos):
-                    pygame.draw.rect(game.window, (255, 255, 255), button)
-                    button.x += round(button.w * 0.05)
-                    button.y += round(button.h * 0.05)
-                    button.w = round(0.9 * button.w)
-                    button.h = round(0.9 * button.h)
-                    button.pressed = True
-                if event.type == pygame.MOUSEBUTTONUP:
-                    if button.pressed:
-                        button.w = round(button.w / 0.9)
-                        button.h = round(button.h / 0.9)
-                        button.x -= round(button.w * 0.05)
-                        button.y -= round(button.h * 0.05)
-                        button.pressed = False
-                    if button.collidepoint(event.pos):
-                        match button.button_type:
-                            case 'Start':
-                                game.height = int(input_fields[0].text)
-                                game.width = int(input_fields[1].text)
-                                game.mines = int(input_fields[2].text)
-                                start_game(game, game.height, game.width, game.mines)
-                            case 'Easy':
-                                input_fields[0].text, input_fields[1].text, input_fields[2].text = '8', '10', '10'
-                                draw(game.window, input_fields[0].color, input_fields[0])
-                                draw(game.window, input_fields[1].color, input_fields[1])
-                                draw(game.window, input_fields[2].color, input_fields[2])
-                            case 'Medium':
-                                input_fields[0].text, input_fields[1].text, input_fields[2].text = '14', '18', '40'
-                                draw(game.window, input_fields[0].color, input_fields[0])
-                                draw(game.window, input_fields[1].color, input_fields[1])
-                                draw(game.window, input_fields[2].color, input_fields[2])
-                            case 'Hard':
-                                input_fields[0].text, input_fields[1].text, input_fields[2].text = '20', '24', '99'
-                                draw(game.window, input_fields[0].color, input_fields[0])
-                                draw(game.window, input_fields[1].color, input_fields[1])
-                                draw(game.window, input_fields[2].color, input_fields[2])
+                if button.is_pressed(game.window, event):
+                    match button.button_type:
+                        case 'Start':
+                            game.height = int(input_fields[0].text)
+                            game.width = int(input_fields[1].text)
+                            game.mines = int(input_fields[2].text)
+                            start_game(game, game.height, game.width, game.mines)
+                        case 'Easy':
+                            input_fields[0].text, input_fields[1].text, input_fields[2].text = '8', '10', '10'
+                            draw(game.window, input_fields[0].color, input_fields[0])
+                            draw(game.window, input_fields[1].color, input_fields[1])
+                            draw(game.window, input_fields[2].color, input_fields[2])
+                        case 'Medium':
+                            input_fields[0].text, input_fields[1].text, input_fields[2].text = '14', '18', '40'
+                            draw(game.window, input_fields[0].color, input_fields[0])
+                            draw(game.window, input_fields[1].color, input_fields[1])
+                            draw(game.window, input_fields[2].color, input_fields[2])
+                        case 'Hard':
+                            input_fields[0].text, input_fields[1].text, input_fields[2].text = '20', '24', '99'
+                            draw(game.window, input_fields[0].color, input_fields[0])
+                            draw(game.window, input_fields[1].color, input_fields[1])
+                            draw(game.window, input_fields[2].color, input_fields[2])
 
                 draw(game.window, button.color, button)
 
@@ -203,40 +150,16 @@ def show_result_window(game: Game):
             if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
                 running = False
                 game.close()
-            for button in [restart_button, exit_button]:
-                if event.type == pygame.MOUSEMOTION:
-                    if button.collidepoint(event.pos):
-                        button.active = True
-                        button.color = button.active_color
-                    else:
-                        button.active = False
-                        button.color = button.passive_color
-                if event.type == pygame.MOUSEBUTTONDOWN and button.collidepoint(event.pos):
-                    pygame.draw.rect(game.window, (255, 255, 255), button)
-                    button.x += round(button.w * 0.05)
-                    button.y += round(button.h * 0.05)
-                    button.w = round(0.9 * button.w)
-                    button.h = round(0.9 * button.h)
-                    button.pressed = True
-                if event.type == pygame.MOUSEBUTTONUP:
-                    if button.pressed:
-                        button.w = round(button.w / 0.9)
-                        button.h = round(button.h / 0.9)
-                        button.x -= round(button.w * 0.05)
-                        button.y -= round(button.h * 0.05)
-                        button.pressed = False
-                    if button.collidepoint(event.pos):
-                        match button.button_type:
-                            case 'Restart':
-                                show_game_menu(game)
-                            case 'Exit':
-                                running = False
-                                game.close()
-                draw(game.window, button.color, button)
+            if restart_button.is_pressed(game.window, event):
+                show_game_menu(game)
+            if exit_button.is_pressed(game.window, event):
+                running = False
+                game.close()
+            draw(game.window, restart_button.color, restart_button)
+            draw(game.window, exit_button.color, exit_button)
 
 
-
-def right_click(game: Game, x, y):
+def right_click(game: Game, x: int, y: int):
     if game.playerDesk[x][y] == -2:
         game.playerDesk[x][y] = -3
         game.continue_render(x, y, 'Flag')
@@ -245,5 +168,5 @@ def right_click(game: Game, x, y):
         game.continue_render(x, y, 'NotOpened')
 
 
-def left_click(game, x, y) -> bool:
+def left_click(game: Game, x: int, y: int) -> bool:
     return game.step(x, y)
