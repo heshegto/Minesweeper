@@ -187,13 +187,13 @@ def start_game(game: Game, height: int, width: int, mines: int) -> None:
 def show_result_window(game: Game):
     pygame.init()
     pygame.display.init()
-    game.window = pygame.display.set_mode((300, 150))
+    game.window = pygame.display.set_mode((252, 150))
     game.window.fill(background_color)
     base_font = pygame.font.Font(None, 32)
     text_surface = base_font.render(game.end_game_message, True, (0, 0, 0))
 
-    restart_button = Button(80, 50, 92, 32, text_on_button="Restart", button_type='Restart_button')
-    exit_button = Button(90, 100, 62, 32, text_on_button="Exit", button_type='exit_button')
+    restart_button = Button(80, 50, 92, 32, text_on_button="Restart", button_type='Restart')
+    exit_button = Button(95, 100, 62, 32, text_on_button="Exit", button_type='Exit')
 
     game.window.blit(text_surface, (10, 10))
     pygame.display.update()
@@ -203,6 +203,37 @@ def show_result_window(game: Game):
             if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
                 running = False
                 game.close()
+            for button in [restart_button, exit_button]:
+                if event.type == pygame.MOUSEMOTION:
+                    if button.collidepoint(event.pos):
+                        button.active = True
+                        button.color = button.active_color
+                    else:
+                        button.active = False
+                        button.color = button.passive_color
+                if event.type == pygame.MOUSEBUTTONDOWN and button.collidepoint(event.pos):
+                    pygame.draw.rect(game.window, (255, 255, 255), button)
+                    button.x += round(button.w * 0.05)
+                    button.y += round(button.h * 0.05)
+                    button.w = round(0.9 * button.w)
+                    button.h = round(0.9 * button.h)
+                    button.pressed = True
+                if event.type == pygame.MOUSEBUTTONUP:
+                    if button.pressed:
+                        button.w = round(button.w / 0.9)
+                        button.h = round(button.h / 0.9)
+                        button.x -= round(button.w * 0.05)
+                        button.y -= round(button.h * 0.05)
+                        button.pressed = False
+                    if button.collidepoint(event.pos):
+                        match button.button_type:
+                            case 'Restart':
+                                show_game_menu(game)
+                            case 'Exit':
+                                running = False
+                                game.close()
+                draw(game.window, button.color, button)
+
 
 
 def right_click(game: Game, x, y):
